@@ -1,0 +1,7 @@
+version: '3'
+services:
+    email_quota:
+        build: .
+        container_name: emailquota
+        restart: unless-stopped
+        env_file: .Renviron
