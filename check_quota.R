@@ -70,8 +70,9 @@ repeat {
     
     print(qc_ratio)
     print(purrr::map(qc_values, ~.x/1024/1024))
+    print(recheck_freq)
     
-    if(qc_ratio$STORAGE >= threshold & qc_ratio$STORAGE != previous_ratio) {
+    if(qc_ratio$STORAGE >= threshold & qc_ratio$STORAGE > previous_ratio) {
         po_title <- glue::glue("Email {scales::percent(qc_ratio$STORAGE, accuracy = .01)} Full!")
         po_message <- glue::glue("Email is {scales::percent(qc_ratio$STORAGE, accuracy = .01)} full at {round(qc_values$STORAGE[1]/1024/1024, 3)} GB")
         
