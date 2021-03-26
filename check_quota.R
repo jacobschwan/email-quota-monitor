@@ -19,9 +19,10 @@ to_lineprotocol <- function(values) {
 }
 
 write_ifdb <- function(linedata, server, port=8086, org, bucket, token) {
-    httr::POST(glue::glue("http://{server}:{port}/api/v2/write?org={org}&bucket={bucket}&precision=s"),
+    response <- httr::POST(glue::glue("http://{server}:{port}/api/v2/write?org={org}&bucket={bucket}&precision=s"),
                httr::add_headers(Authorization=glue::glue("Token {token}")), 
                            body = linedata, encode = "raw")
+    print(response)
 }
 
 
@@ -76,20 +77,23 @@ repeat {
         po_title <- glue::glue("Email {scales::percent(qc_ratio$STORAGE, accuracy = .01)} Full!")
         po_message <- glue::glue("Email is {scales::percent(qc_ratio$STORAGE, accuracy = .01)} full at {round(qc_values$STORAGE[1]/1024/1024, 3)} GB")
         
-        pushoverr::pushover_emergency(title = po_title,
+        pushoverr::pushover_high(title = po_title,
                            message = po_message)
     }
     
     previous_ratio <- qc_ratio$STORAGE
     
     if(ifdb_server != "") {
-        write_ifdb(linedata = to_lineprotocol(qc_values),
+        data_line <- to_lineprotocol(qc_values)
+        print(data_line)
+        write_ifdb(linedata = data_line,
                    server = ifdb_server, port = ifdb_port,
                    org = ifdb_org, bucket = ifdb_bucket,
                    token = ifdb_token)
     }
 
     if(hc_id != "") {
+        print("Sending healthcheck")
         send_healthcheck(hc_id)
     }
     
