@@ -1,4 +1,5 @@
 library(magrittr)
+options(scipen = 999)
 
 send_healthcheck <- function(id, fail = F) {
     if(fail) {
@@ -10,12 +11,32 @@ send_healthcheck <- function(id, fail = F) {
     httr::GET(url = url)
 }
 
+to_lineprotocol <- function(values) {
+    df <- values %>%
+        purrr::map_dfr(~set_names(.x, c("value", "quota")), .id = "measure")
+
+    paste0(df$measure," value=",df$value,",quota=",df$quota, collapse = "\n")
+}
+
+write_ifdb <- function(linedata, server, port=8086, org, bucket, token) {
+    httr::POST(glue::glue("http://{server}:{port}/api/v2/write?org={org}&bucket={bucket}&precision=s"),
+               httr::add_headers(Authorization=glue::glue("Token {token}")), 
+                           body = linedata, encode = "raw")
+}
+
 
 user <- curl::curl_escape(Sys.getenv("QC_USER"))
 pass <- curl::curl_escape(Sys.getenv("QC_PASS"))
 server <- Sys.getenv("QC_SERVER")
 recheck_freq <- as.numeric(Sys.getenv("QC_FREQ")) * 60
 threshold <- as.numeric(Sys.getenv("QC_THRESHOLD"))
+
+ifdb_server <- Sys.getenv("IFDB_SERVER")
+ifdb_port <- Sys.getenv("IFDB_PORT")
+ifdb_org <- Sys.getenv("IFDB_ORG")
+ifdb_bucket <- Sys.getenv("IFDB_BUCKET")
+ifdb_token <- Sys.getenv("IFDB_TOKEN")
+
 
 hc_id <- Sys.getenv("HEALTHCHECK_ID")
 
@@ -60,10 +81,17 @@ repeat {
     
     previous_ratio <- qc_ratio$STORAGE
     
+    if(ifdb_server != "") {
+        write_ifdb(linedata = to_lineprotocol(qc_values),
+                   server = ifdb_server, port = ifdb_port,
+                   org = ifdb_org, bucket = ifdb_bucket,
+                   token = ifdb_token)
+    }
+
     if(hc_id != "") {
         send_healthcheck(hc_id)
     }
-
+    
     Sys.sleep(recheck_freq)
 }
 
