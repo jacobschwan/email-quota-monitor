@@ -11,7 +11,7 @@ RUN apt-get -y update && apt-get install -y \
    
 # Install further R packages
 RUN install2.r --error \
- --repos http://cloud.r-project.org \
+# --repos http://cloud.r-project.org \
     curl \
     magrittr \
     httr \
@@ -20,6 +20,7 @@ RUN install2.r --error \
     pushoverr \
     glue \
     scales \
+    dplyr \
    && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
    
 COPY check_quota.R /app/check_quota.R
