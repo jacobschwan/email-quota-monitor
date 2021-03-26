@@ -19,6 +19,7 @@ RUN install2.r --error \
     purrr \
     pushoverr \
     glue \
+    scales \
    && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
    
 COPY check_quota.R /app/check_quota.R
